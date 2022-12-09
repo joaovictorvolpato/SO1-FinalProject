@@ -1,30 +1,26 @@
-/**
- * @file Laser.h
- */
-
 #ifndef LASER_H
 #define LASER_H
 
 #include <allegro5/allegro.h>
 
+#include "traits.h"
 #include "Point.h"
 #include "Vector.h"
+#include "Projectile.h"
 
-class Laser{
-  public:
-   Point centre;
-   ALLEGRO_COLOR color;
-   Vector speed;
-   bool live;
-   Laser (Point p, ALLEGRO_COLOR c, Vector s);   
-   ~Laser();
-   
-   void draw();
-   void update(double dt);
-   void load_assets() { }
-   
-  private:
-   bool in_bound();
+__BEGIN_API
+
+class Laser : public Projectile
+{
+public:
+    Laser(Point point, ALLEGRO_COLOR color, Vector vector, bool isPlayerShot);
+    ~Laser();
+
+    void draw();
+    void update(double diffTime);
+    int getSize();
 };
+
+__END_API
 
 #endif

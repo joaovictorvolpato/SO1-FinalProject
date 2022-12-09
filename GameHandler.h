@@ -1,146 +1,102 @@
-/**
- * @file GameHandler.h
- */
+#ifndef SPACESHOOTER_H
+#define SPACESHOOTER_H
 
-#ifndef GAMEHANDLER_H
-#define GAMEHANDLER_H
+#include <iostream>
+#include "cpu.h"
+#include "traits.h"
+#include "thread.h"
+#include "semaphore.h"
 
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_font.h>
-#include <allegro5/allegro_ttf.h>
+#include "Window.h"
+#include "KeyBoard.h"
+#include "PlayerShip.h"
+#include "Collision.h"
+#include "PurpleEnemiesControl.h"
 
-#include <list>
-#include <vector>
-#include <memory>
-#include <string>
+__BEGIN_API
 
-#include "Vector.h"
-#include "Missile.h"
-#include "Laser.h"
-#include "SpaceShip.h"
-#include "Bomb.h"
-#include "Boss.h"
+class GameHandler
+{
+public:
+    GameHandler() {}
+    ~GameHandler() {}
 
-struct Point;
-class Timer;
-class EnemySpaceShip;
-class Bomb;
-class SpaceShip;
-class Sprite;
-class Missile;
-class Laser;
+    static void run(void *name)
+    {
+        windowThread = new Thread(windowExecutor);
+        keyboardThread = new Thread(keyBoardFunc);
+        playerShipThread = new Thread(playerShipFunc);
+        collisionThread = new Thread(collisionFunc);
+        purpleShipsControlThread = new Thread(purpleShipsFunc);
 
+        playerShipThread->join();
+        windowThread->join();
+        keyboardThread->join();
+        collisionThread->join();
+        purpleShipsControlThread->join();
 
-extern const int GAME_OVER_WAIT_TIME;
-extern const int WEAPON_DELAY_LASER;
-extern const int WEAPON_DELAY_MISSILE;
-extern const Vector PLAYER_PROJECTILE_SPEED;
+        delete playerShipThread;
+        delete windowThread;
+        delete keyboardThread;
+        delete collisionThread;
+        delete purpleShipsControlThread;
+    }
 
-class GameHandler{
-  public:
-   GameHandler(int w, int h, int f);
-   ~GameHandler();
+    static void windowExecutor()
+    {
+        window = new Window(800, 600, 60);
+        window->execute();
+        delete window;
+    }
 
-   void update(double);
-   void draw();
-   void init();
-   void input(ALLEGRO_KEYBOARD_STATE&);   
-   bool is_game_over();
+    static void playerShipFunc()
+    {
+        playerShipObj = new PlayerShip(GameHandler::kBoardObj);
+        window->setPlayerShip(playerShipObj);
+        playerShipObj->setWindowReference(window);
 
-   void drawBossIncomingMessage();
-   void drawLives();
-   void drawBackground();
-   void drawShots();
-   void drawEnemySpaceShips();
-   void drawBombs();
-   void drawBoss();
-   void showGameOverMessage();
+        playerShipObj->run();
+        // delete playerShipObj;
+    }
 
-   void updateBoss();
-   void updateBackground(double dt);
-   void updateProjectilePosition(double);
-   void updateEnemyPosition(double);
-   void updateEnemySpaceShipPosition(double dt);
-   void updateBombPosition(double dt);
-   void updateBossPosition(double dt);
-   
-   void respawnSpaceShip();
+    static void keyBoardFunc()
+    {
+        kBoardObj = new Keyboard();
+        kBoardObj->setWindowReference(window);
+        kBoardObj->run();
+        // delete kBoardObj;
+    }
 
+    static void collisionFunc()
+    {
+        collisionObj = new Collision();
+        collisionObj->setPlayerShip(playerShipObj);
+        collisionObj->setWindow(window);
+        playerShipObj->setCollisionReference(collisionObj);
+        collisionObj->run();
+    }
 
-   void collision();
-   void checkCollisionOnPlayer();
-   void checkCollisionOnEnemies();
-   void checkCollidingEnemyWithPlayer();
-   void clean();
-   void cullPlayer();
-   void cleanLasers();
-   void cleanMissiles();
-   void cullEnemies();
-   
-   void setupSpaceShip();
-   void setupBackground();
-   void setupTimers();
-   ALLEGRO_PATH* setupPath();
-   void setupSprites();
+    static void purpleShipsFunc()
+    {
+        purpleShipsControlObj = new PurpleEnemiesControl();
+        purpleShipsControlObj->setCollisionReference(collisionObj);
+        purpleShipsControlObj->setWindowReference(window);
+        purpleShipsControlObj->run();
+    }
 
+    static Thread *playerShipThread;
+    static Thread *windowThread;
+    static Thread *keyboardThread;
+    static Thread *collisionThread;
+    static Thread *purpleShipsControlThread;
 
-   void addLaser(const Point&, const ALLEGRO_COLOR&, const Vector&);
-   void addMissile(const Point&, const ALLEGRO_COLOR&, const Vector&, bool isFromBoss);
-   void addBomb(const Point&, const ALLEGRO_COLOR&, const Vector&);
-   void addEnemySpaceShip(const Point&, const ALLEGRO_COLOR&, const Vector&);
-   void addBoss(const Point&, const ALLEGRO_COLOR&, const Vector&);
-   void addPlayerLaserSingleShot();
-   void addPlayerMissileSingleShot();
-   
-   void spawn();
-   void spawnBoss();
-   void bossFire();
-   void circleLaser(std::shared_ptr<Bomb> bomb);
-   bool doHitboxesIntersect(const Point&, const int&,
-			    const Point&, const int&);   
-   bool doColorsMatch(const ALLEGRO_COLOR&, const ALLEGRO_COLOR&);
-   bool isPointBoxCollision(const Point&, const Point&, const int&);
-
-   
-  private:   
-   std::shared_ptr<Timer> laserShotsTimer;
-   std::shared_ptr<Timer> missileShotsTimer;
-   std::shared_ptr<Timer> bossTimer;
-   std::shared_ptr<Timer> deadRespawnTimer;
-   std::shared_ptr<Timer> spawnEnemyShipsTimer;
-   std::shared_ptr<Timer> spawnBombsTimer;
-
-   std::list<std::shared_ptr<Laser>> lasersList;
-   std::list<std::shared_ptr<Missile>> missileList;
-   std::list<std::shared_ptr<EnemySpaceShip>> enemySpaceShipsList;
-   std::list<std::shared_ptr<Bomb>> bombEnemiesList;
-   std::shared_ptr<SpaceShip> spaceShip;
-   std::shared_ptr<Sprite> spaceShipSprite;
-   std::shared_ptr<Sprite> enemyShip;
-   std::shared_ptr<Sprite> enemyDeath;
-   std::shared_ptr<Sprite> bossShip;
-   std::shared_ptr<Sprite> enemyBomb;
-   std::shared_ptr<Boss> boss;
-
-   //Background
-   Point bgMid;
-   Point fgMid;
-   Point fg2Mid;
-   Vector bgSpeed;
-   Vector fgSpeed;
-   std::shared_ptr<Sprite> bg;
-   std::shared_ptr<Sprite> fg;
-   
-   // flags
-   bool gameOver;
-
-   bool bossExists = false;
-   bool _Boss = false;
-
-   int lives;
-   int displayWidth;
-   int displayHeight;
-   int framesPerSec;
+    static PlayerShip *playerShipObj;
+    static Window *window;
+    static Keyboard *kBoardObj;
+    static Collision *collisionObj;
+    static PurpleEnemiesControl *purpleShipsControlObj;
 };
+
+__END_API
 
 #endif

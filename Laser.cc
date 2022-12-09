@@ -1,41 +1,25 @@
-/**
- * @file Laser.cc
- */
-
-
+#include <allegro5/allegro_primitives.h>
 #include "Laser.h"
 #include <iostream>
-#include <allegro5/allegro_primitives.h>
 
-Laser::Laser(Point p, ALLEGRO_COLOR c, Vector s):centre(p), color(c), speed(s)
+__BEGIN_API
+
+Laser::Laser(Point point, ALLEGRO_COLOR color, Vector speed, bool isPlayerShot) : Projectile(point, color, speed, isPlayerShot) {}
+
+Laser::~Laser() {}
+
+void Laser::draw()
 {
-
-   centre = centre + speed * 0.1;
-   live = true;
+    Point otherPoint = this->_point + this->_speed * (0.05);
+    al_draw_line(this->_point.x, this->_point.y, otherPoint.x, otherPoint.y, this->_color, 3);
+    std::cout<<"desenhando";
 }
 
-Laser::~Laser() {
-   
+void Laser::update(double diffTime)
+{
+    this->_point = this->_point + this->_speed * diffTime;
 }
 
-void Laser::update(double dt) {
-   centre = centre + speed * dt;
-   if (!in_bound())
-      live = false;
-}
+int Laser::getSize() { return 3; }
 
-void Laser::draw() {
-   Point tracer = centre + speed * (-0.05);
-   al_draw_line(centre.x, centre.y,
-		tracer.x, tracer.y,
-		color, 3);		
-}
-
-bool Laser::in_bound() {
-   if ((centre.x > 800) ||
-       (centre.x < 0) ||
-       (centre.y > 600) ||
-       (centre.y < 0))
-      return false;
-   return true;
-}
+__END_API

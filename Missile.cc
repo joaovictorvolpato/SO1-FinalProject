@@ -1,60 +1,57 @@
-
+#include <allegro5/allegro_primitives.h>
 #include "Missile.h"
-#include <cmath>
-#include "Sprite.h"
 
-Missile::Missile(Point p, ALLEGRO_COLOR c, Vector s, bool isFromBoss): centre(p), color(c), speed(s)
+__BEGIN_API
+
+std::vector<std::shared_ptr<Sprite>> Missile::sprites;
+int Missile::SPRITES_VECTOR_MAX_INDEX = 7;
+
+Missile::Missile(Point point, ALLEGRO_COLOR color, Vector speed, bool isPlayerShot) : Projectile(point, color, speed, isPlayerShot)
 {
-   if(isFromBoss){
-      angle=atan(speed.y/speed.x)+4.71;
-   }else{
-      angle=atan(speed.y/speed.x)+4.71 * -1;
-   }
-   
-   centre = centre + speed * 0.1;
-   mAnim = 0;
-   live = true;
+    this->loadSprites();
+
+    if (isPlayerShot) // Corrige o sprite de míssil
+        this->angle = (atan(speed.y / speed.x) + 4.71) * -1;
+    else
+        this->angle = atan(speed.y / speed.x) + 4.71;
+
+    // Move um pouco para frente da nave
+    this->_point = this->_point + this->_speed * 0.1;
 }
 
-Missile::~Missile() {
-   
+Missile::~Missile() {}
+
+void Missile::draw()
+{
+    Missile::sprites[currentSpriteIndex]->draw_rotated(this->_point, this->angle, 0);
+    currentSpriteIndex++;
+    if (currentSpriteIndex > Missile::SPRITES_VECTOR_MAX_INDEX)
+        currentSpriteIndex = 0; // Reset o index para acessar o vetor de sprites
 }
 
-void Missile::load_assets() {
-   ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-   al_append_path_component(path, "resources");
-   al_change_directory(al_path_cstr(path, '/'));  
-   mvec.push_back(std::make_shared<Sprite> ("m1.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m2.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m3.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m4.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m5.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m6.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m7.png"));
-   mvec.push_back(std::make_shared<Sprite> ("m8.png"));
-   al_destroy_path(path);
+void Missile::update(double diffTime)
+{
+    this->_point = this->_point + this->_speed * diffTime;
 }
 
-void Missile::update(double dt) {
-   centre = centre + speed * dt;
-   if (!in_bound()) {
-      live = false;
-   }
+int Missile::getSize() { return 3; }
+
+void Missile::loadSprites()
+{
+    ALLEGRO_PATH *path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+    al_append_path_component(path, "resources");
+    al_change_directory(al_path_cstr(path, '/'));
+
+    Missile::sprites.push_back(std::make_shared<Sprite>("m1.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m2.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m3.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m4.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m5.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m6.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m7.png"));
+    Missile::sprites.push_back(std::make_shared<Sprite>("m8.png"));
+
+    al_destroy_path(path);
 }
 
-void Missile::draw() {
-   mvec[mAnim]->draw_rotated(centre, angle, 0);
-   mAnim++;
-   if (mAnim > 7)
-      mAnim = 0;
-}
-
-bool Missile::in_bound() {
-   if ((centre.x > 800) ||
-       (centre.x < 0) ||
-       (centre.y > 600) ||
-       (centre.y < 0))
-      return false;
-   return true;
-}
-
+__END_API

@@ -46,7 +46,3 @@ main: $(OBJECTS)
 # clean out the directory but keep executables with command "clean"
 clean : 
 	rm -f *~ *.o *.d *.gch main tests
-
-
-
-

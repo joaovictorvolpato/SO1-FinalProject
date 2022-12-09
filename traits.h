@@ -11,13 +11,28 @@ __BEGIN_API
 
 class CPU;
 class Debug;
-class System;
-class Thread;
-class Lists; 
-class Semaphore;
-//declaração das classes criadas nos trabalhos devem ser colocadas aqui
 
-//declaração da classe Traits
+class Thread;
+
+class System;
+
+class SpaceShooter;
+
+class Lists;
+
+class Semaphore;
+
+class PlayerShip;
+
+class Keyboard;
+
+class Window;
+
+class PurpleEnemy;
+
+class PurpleEnemiesControl;
+
+
 template<typename T>
 struct Traits {
     static const bool debugged = false;

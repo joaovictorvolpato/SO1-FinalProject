@@ -1,25 +1,10 @@
-/**
- * @file main.cc
- * @brief
- */
+#include "GameHandler.h"
+#include "system.h"
+#include "thread.h"
 
+__USING_API
 
-#include "Engine.h"
-#include <allegro5/allegro.h>
-#include <ctime>
-#include <cstdlib>
-#include <string>
-#include <iostream>
-
-int main() {
-   srand(time(0));
-   
-   Engine shooty(800, 600, 60);
-   shooty.init();
-   shooty.run();
-
-   return 0;
-
+int main(void)
+{
+   System::init(&GameHandler::run);
 }
-
-
